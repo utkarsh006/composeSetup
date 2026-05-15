@@ -15,7 +15,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.apicallingcompose.data.Note
-import com.example.apicallingcompose.data.NoteStatus
 import com.example.apicallingcompose.presentation.NotesViewModel
 import java.time.format.DateTimeFormatter
 
@@ -73,8 +72,8 @@ fun NotesScreen(
         AddEditNoteDialog(
             note = null,
             onDismiss = { showAddNoteDialog = false },
-            onSave = { title, content, status ->
-                viewModel.addNote(title, content, status)
+            onSave = { title, content ->
+                viewModel.addNote(title, content)
                 showAddNoteDialog = false
             }
         )
@@ -84,8 +83,8 @@ fun NotesScreen(
         AddEditNoteDialog(
             note = note,
             onDismiss = { editingNote = null },
-            onSave = { title, content, status ->
-                viewModel.updateNote(note.copy(title = title, content = content, status = status))
+            onSave = { title, content ->
+                viewModel.updateNote(note.copy(title = title, content = content))
                 editingNote = null
             }
         )
@@ -121,18 +120,6 @@ fun NoteItem(
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row {
-                        Text(
-                            text = note.status.name.replace("_", " "),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = when (note.status) {
-                                NoteStatus.NOT_STARTED -> MaterialTheme.colorScheme.error
-                                NoteStatus.IN_PROGRESS -> MaterialTheme.colorScheme.secondary
-                                NoteStatus.COMPLETED -> MaterialTheme.colorScheme.tertiary
-                            }
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = note.content,
                         style = MaterialTheme.typography.bodyMedium,
@@ -164,11 +151,10 @@ fun NoteItem(
 fun AddEditNoteDialog(
     note: Note?,
     onDismiss: () -> Unit,
-    onSave: (String, String, NoteStatus) -> Unit
+    onSave: (String, String) -> Unit
 ) {
     var title by remember { mutableStateOf(note?.title ?: "") }
     var content by remember { mutableStateOf(note?.content ?: "") }
-    var status by remember { mutableStateOf(note?.status ?: NoteStatus.NOT_STARTED) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -193,25 +179,13 @@ fun AddEditNoteDialog(
                         .height(120.dp),
                     maxLines = 5
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Status", style = MaterialTheme.typography.labelMedium)
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    NoteStatus.values().forEach { statusOption ->
-                        FilterChip(
-                            selected = status == statusOption,
-                            onClick = { status = statusOption },
-                            label = { Text(statusOption.name.replace("_", " ")) },
-                            modifier = Modifier.padding(end = 8.dp, bottom = 4.dp)
-                        )
-                    }
-                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     if (title.isNotBlank() && content.isNotBlank()) {
-                        onSave(title, content, status)
+                        onSave(title, content)
                     }
                 },
                 enabled = title.isNotBlank() && content.isNotBlank()
